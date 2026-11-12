@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SEMONEMO 세모네모 · 시점을 돌려 착시로 길을 잇는 퍼즐 게임</title>
+<meta name="description" content="3D 공간에서는 서로 떨어진 길도, 시점을 바꾸면 하나의 길이 됩니다. 착시로 길을 만들고 퍼즐을 풀며 세모네모의 세계를 탐험하는 퍼즐 어드벤처.">
+<meta name="theme-color" content="#9AA3CF">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SEMONEMO 세모네모">
+<meta property="og:description" content="시점을 돌려 착시로 길을 잇는 퍼즐 게임">
+<meta property="og:image" content="https://seongyooo.github.io/semonemo/assets/img/og.jpg">
+<meta property="og:url" content="https://seongyooo.github.io/semonemo/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preload" href="assets/font/tenor-sans.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: "Tenor Sans"; src: url("assets/font/tenor-sans.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Gowun Batang"; src: url("assets/font/gowun-batang.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("assets/font/pretendard-medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+
+:root {
+  /* The game's own colours: its sky, the ink of its words, the Core's light, its stone. */
+  --sky-hi: #9AA3CF;
+  --sky: #A9B0D5;
+  --dusk: #C6BACB;
+  --mist: #ECE6EA;
+  --paper: #F3F0F4;
+  --ink: #242A4A;
+  --ink-2: #4A4F6E;
+  --ink-3: #6B6F8C;
+  --gold: #FFDB80;
+  --gold-glow: #FFBD38;
+  --gold-ink: #A8681F;
+  --stone: #E8DCC6;
+  --serif: "Gowun Batang", "Nanum Myeongjo", serif;
+  --sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --latin: "Tenor Sans", "Gowun Batang", serif;
+  --measure: 34rem;
+  --gutter: clamp(20px, 5vw, 56px);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 1.0625rem/1.8 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+img, video { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--gold-ink); outline-offset: 3px; border-radius: 4px; }
+.wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ---------------------------------------------------------------- the opening: the sky, the name written in */
+.hero {
+  position: relative;
+  text-align: center;
+  padding-top: clamp(64px, 13vh, 132px);
+  background: linear-gradient(180deg, var(--sky-hi) 0%, var(--sky) 30%, var(--dusk) 64%, var(--mist) 86%, var(--paper) 100%);
+  overflow: hidden;
+}
+.hero h1 { margin: 0; }
+.logo { width: min(84vw, 660px); height: auto; margin: 0 auto; overflow: visible; }
+.logo-letters path {
+  fill: var(--ink); fill-opacity: 0;
+  stroke: var(--ink); stroke-width: 1.1;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: write .95s cubic-bezier(.5, .05, .35, 1) forwards, ink .7s ease forwards;
+  animation-delay: calc(var(--i) * .13s + .25s), calc(var(--i) * .13s + 1s);
+}
+.logo-shapes path {
+  fill: none; stroke: var(--gold); stroke-linejoin: miter;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: write 1s cubic-bezier(.5, .05, .35, 1) forwards;
+  animation-delay: calc(var(--i) * .13s + .55s);
+}
+.logo-shapes .halo { stroke: var(--gold-glow); stroke-width: 15px; opacity: .42; filter: blur(4px); }
+@keyframes write { to { stroke-dashoffset: 0; } }
+@keyframes ink { to { fill-opacity: 1; stroke-width: 0; } }
+
+.slogan {
+  margin: clamp(10px, 2vw, 18px) auto 0;
+  max-width: none;
+  font: 400 clamp(.95rem, 2.6vw, 1.2rem)/1.4 var(--latin);
+  letter-spacing: .14em;
+  opacity: 0; animation: rise .9s ease 1.9s forwards;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.hero picture { display: block; margin-top: clamp(-8px, -2vw, -40px); }
+.hero picture img {
+  width: 100%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 76%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 76%, transparent 100%);
+}
+.hero-words { position: relative; margin-top: clamp(-120px, -12vw, -40px); padding-bottom: clamp(56px, 9vw, 96px); }
+.tagline {
+  margin: 0 auto;
+  max-width: 22em;
+  font: 400 clamp(1.45rem, 5.2vw, 2.3rem)/1.45 var(--serif);
+  letter-spacing: -.005em;
+  text-wrap: balance;
+}
+.cta-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; justify-content: center; }
+.button {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 24px 13px 20px;
+  border-radius: 999px;
+  background: var(--ink); color: #fff;
+  font: 500 1rem/1 var(--sans); text-decoration: none;
+  transition: transform .2s ease, background .2s ease;
+}
+.button:hover { background: #31385F; }
+.button:active { transform: translateY(1px); }
+.button svg { width: 14px; height: 14px; }
+.status { color: var(--ink-2); font-size: .95rem; }
+.status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 9px 2px 0; border-radius: 50%; background: var(--gold-glow); box-shadow: 0 0 0 4px rgba(255, 189, 56, .22); }
+
+/* ---------------------------------------------------------------- sections */
+section { padding: clamp(64px, 11vw, 132px) 0; }
+h2 {
+  margin: 0 0 .7em;
+  font: 400 clamp(1.6rem, 4.6vw, 2.4rem)/1.35 var(--serif);
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
+.note { font-size: .95rem; color: var(--ink-3); }
+
+/* the trailer */
+.trailer { padding-top: 0; }
+.player {
+  position: relative; display: block; width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0; border: 0; border-radius: 10px; overflow: hidden;
+  background: #1E2238 center / cover no-repeat;
+  cursor: pointer;
+  box-shadow: 0 30px 60px -36px rgba(36, 42, 74, .55);
+}
+.player img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+.player:hover img { transform: scale(1.015); }
+.player .play {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: clamp(64px, 11vw, 92px); height: clamp(64px, 11vw, 92px);
+  border-radius: 50%;
+  background: rgba(243, 240, 244, .9);
+  display: grid; place-items: center;
+  box-shadow: 0 10px 30px -10px rgba(36, 42, 74, .5);
+}
+.player .play svg { width: 34%; margin-left: 8%; fill: var(--ink); }
+.player iframe, .player video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.trailer figcaption { margin-top: 14px; color: var(--ink-3); font-size: .95rem; }
+
+/* the rule */
+.rule .grid { display: grid; gap: clamp(28px, 5vw, 64px); align-items: center; }
+.marks { display: flex; gap: 18px; margin: 0 0 22px; }
+.marks svg { width: 34px; height: 34px; fill: none; stroke: var(--gold-ink); stroke-width: 2.4; }
+.rule figure { margin: 0; }
+.rule img { border-radius: 10px; }
+.rule figcaption, .more figcaption { margin-top: 12px; color: var(--ink-3); font-size: .95rem; }
+
+/* the journey: the cube hub and the seven chapters in order */
+.journey-strip {
+  list-style: none; margin: 34px 0 0; padding: 0 var(--gutter) 10px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: min(46vw, 210px); gap: 10px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gutter);
+  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+}
+.journey-strip li { scroll-snap-align: start; position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: .79; background: #1E2238; }
+.journey-strip img { width: 100%; height: 100%; object-fit: cover; }
+.journey-strip li::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(180deg, transparent, rgba(20, 24, 48, .7)); }
+.journey-strip .label { position: absolute; left: 14px; right: 10px; bottom: 12px; z-index: 1; color: #fff; line-height: 1.25; }
+.journey-strip .label small { display: block; font: 400 .7rem/1.4 var(--latin); letter-spacing: .2em; color: #FFE2B8; }
+.journey-strip .label span { font: 400 1.05rem/1.3 var(--latin); letter-spacing: .12em; }
+
+/* stages and the map editor */
+.more .pair { display: grid; gap: 28px; margin-top: 34px; }
+.more figure { margin: 0; }
+.more img { border-radius: 10px; }
+
+/* play: the Linker looking up */
+.play-section {
+  padding-bottom: 0;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--mist) 30%, var(--dusk) 72%, var(--sky) 100%);
+  overflow: hidden;
+}
+.play-section .grid { display: grid; gap: 8px; align-items: end; }
+.play-section .linker { width: min(62vw, 300px); margin: 0 auto; }
+.platforms { list-style: none; margin: 8px 0 18px; padding: 0; max-width: var(--measure); }
+.platforms li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center;
+  padding: 16px 0; border-top: 1px solid rgba(36, 42, 74, .16);
+}
+.platforms li:last-child { border-bottom: 1px solid rgba(36, 42, 74, .16); }
+.platforms b { font-weight: 500; font-size: 1.05rem; }
+.platforms .where { grid-column: 1; color: var(--ink-3); font-size: .95rem; }
+.platforms .soon {
+  grid-column: 2; grid-row: 1 / span 2;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .55); color: var(--ink-2); font-size: .9rem;
+}
+
+/* footer */
+footer { background: var(--sky); padding: 36px 0 calc(40px + env(safe-area-inset-bottom)); color: var(--ink); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; justify-content: space-between; font-size: .92rem; }
+footer .name { font: 400 1rem/1 var(--latin); letter-spacing: .16em; }
+footer nav { display: flex; gap: 20px; flex-wrap: wrap; }
+footer a { text-underline-offset: 3px; }
+
+@media (min-width: 760px) {
+  .rule .grid { grid-template-columns: 1fr 1.15fr; }
+  .more .pair { grid-template-columns: 1fr 1fr; }
+  .journey-strip { grid-auto-flow: row; grid-template-columns: repeat(4, 1fr); gap: 14px; overflow: visible; max-width: 1120px; margin-left: auto; margin-right: auto; }
+  .play-section .grid { grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: center; }
+  .play-section .linker { width: min(100%, 360px); margin: 0 0 0 auto; align-self: end; }
+  .play-section .words { padding-bottom: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .logo-letters path, .logo-shapes path, .slogan { animation: none; stroke-dashoffset: 0; fill-opacity: 1; opacity: 1; }
+  .logo-letters path { stroke-width: 0; }
+  .logo-shapes .halo { opacity: .42; }
+  .player img, .button { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1><svg class="logo" viewBox="-8 16.0 756.24 96.0" role="img" aria-labelledby="logo-title" xmlns="http://www.w3.org/2000/svg"><title id="logo-title">SEMONEMO 세모네모</title><g class="logo-letters"><path style="--i:0" pathLength="1" d="M3.7 82.3Q3.90 86.6 5.95 90.1Q8.0 93.6 11.55 96.05Q15.10 98.5 19.90 99.85Q24.70 101.2 30.40 101.2Q36.2 101.2 40.85 99.80Q45.5 98.4 48.8 95.80Q52.1 93.2 53.90 89.5Q55.7 85.8 55.7 81.3Q55.7 75.1 52.6 71.14Q49.5 67.19 44.85 64.55Q40.2 61.9 34.75 60.09Q29.3 58.3 24.65 56.3Q20.0 54.3 16.9 51.69Q13.8 49.09 13.8 44.8Q13.8 42.4 14.85 40.3Q15.9 38.19 17.95 36.64Q20.0 35.09 23.0 34.15Q26.0 33.2 29.90 33.2Q36.4 33.2 40.95 35.95Q45.5 38.69 46.30 44.59H53.1Q52.5 40.9 50.40 37.95Q48.30 35.0 45.10 32.94Q41.90 30.89 37.85 29.84Q33.80 28.79 29.40 28.79Q24.8 28.79 20.65 30.0Q16.5 31.20 13.35 33.5Q10.20 35.8 8.35 39.3Q6.5 42.8 6.5 47.3Q6.5 53.19 9.5 56.8Q12.5 60.4 17.05 62.8Q21.6 65.19 26.90 66.89Q32.2 68.6 36.75 70.75Q41.30 72.9 44.30 76.0Q47.30 79.1 47.30 84.3Q47.30 90.8 42.55 93.8Q37.80 96.8 29.90 96.8Q23.6 96.8 19.8 95.15Q16.0 93.5 14.0 91.2Q12.0 88.9 11.3 86.45Q10.60 84.0 10.5 82.3Z"/><path style="--i:1" pathLength="1" d="M90.5 30.0V100.0H135.7V94.5H99.6V65.19H130.6V60.59H99.6V35.5H135.7V30.0Z"/><path style="--i:2" pathLength="1" d="M173.5 30.0H166.7V100.0H171.1V42.9H171.5L202.39 101.2H204.2L235.8 43.3H236.2V100.0H245.3V30.0H238.39L206.0 90.1H205.6Z"/><path style="--i:3" pathLength="1" d="M440.83 30.0V83.5H440.43L384.93 28.79H384.43V100.0H389.03V46.5H389.43L444.93 101.2H445.43V30.0Z"/><path style="--i:4" pathLength="1" d="M485.43 30.0V100.0H530.63V94.5H494.53V65.19H525.53V60.59H494.53V35.5H530.63V30.0Z"/><path style="--i:5" pathLength="1" d="M568.43 30.0H561.63V100.0H566.03V42.9H566.43L597.33 101.2H599.13L630.73 43.3H631.13V100.0H640.23V30.0H633.33L600.93 90.1H600.53Z"/></g><g class="logo-shapes" stroke-width="7.62"><path class="halo" style="--i:3" pathLength="1" d="M273.30,100.00 L356.44,100.00 L314.87,28.00 Z"/><path style="--i:3" pathLength="1" d="M273.30,100.00 L356.44,100.00 L314.87,28.00 Z"/><path class="halo" style="--i:7" pathLength="1" d="M668.24,100.00 L740.24,100.00 L740.24,28.00 L668.24,28.00 Z"/><path style="--i:7" pathLength="1" d="M668.24,100.00 L740.24,100.00 L740.24,28.00 L668.24,28.00 Z"/></g></svg></h1>
+  <p class="slogan" lang="en">Change Your Perspective.</p>
+  <picture>
+    <source media="(min-width: 760px)" srcset="assets/img/hero_wide.jpg" width="2400" height="1350">
+    <img src="assets/img/hero_tall.jpg" width="1200" height="1463" alt="게임 화면: 하늘에 떠 있는 불가능한 삼각형 길 위에 링커가 서 있고, 건너편 섬의 문까지 코어의 빛이 이어진다.">
+  </picture>
+  <div class="hero-words wrap">
+    <p class="tagline">시점을 돌려 착시로 길을 잇는 퍼즐 게임</p>
+    <div class="cta-row">
+      <a class="button" href="#trailer"><svg viewBox="0 0 10 12" aria-hidden="true"><path d="M0 0 L10 6 L0 12 Z" fill="currentColor"/></svg>트레일러 보기</a>
+      <span class="status">Google Play 출시 준비 중</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="trailer" id="trailer" aria-label="트레일러">
+    <div class="wrap">
+      <figure style="margin:0">
+        <button class="player" type="button" aria-label="트레일러 재생">
+          <img src="assets/img/trailer_poster.jpg" width="1920" height="1080" alt="" loading="lazy">
+          <span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0 L10 6 L0 12 Z"/></svg></span>
+        </button>
+        <figcaption>트레일러, 1분 22초</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="rule" aria-labelledby="rule-title">
+    <div class="wrap grid">
+      <div>
+        <div class="marks" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="13"/></svg>
+          <svg viewBox="0 0 34 34"><path d="M3 29 L31 29 L17 5 Z"/></svg>
+          <svg viewBox="0 0 34 34"><rect x="5" y="5" width="24" height="24"/></svg>
+        </div>
+        <h2 id="rule-title">같은 문양이 겹치면, 길이 된다</h2>
+        <p>길 끝에는 ○ △ □ 문양이 새겨져 있습니다. 시점을 돌려 떨어진 두 길의 같은 문양을 화면에서 겹치면, 링커는 3D 공간에서는 떨어져 있는 그 사이를 실제로 건너갑니다.</p>
+        <p>공간의 착시로 길을 만들고, 퍼즐을 풀며 세모네모의 세계를 탐험하세요.</p>
+        <p class="note">클릭이나 터치로 걷고, 드래그나 스와이프로 시점을 돌립니다.</p>
+      </div>
+      <figure>
+        <img src="assets/img/rule.jpg" width="1600" height="1200" loading="lazy" alt="게임 화면: 속이 빈 큐브 모양의 길, 큐브 안쪽에 링커가 서 있다.">
+        <figcaption>3장 Fading. 보는 방향에 따라 큐브의 안과 밖이 이어진다.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="journey" aria-labelledby="journey-title">
+    <div class="wrap">
+      <h2 id="journey-title">큐브 허브에서 초원까지</h2>
+      <p>떠 있는 큐브의 면마다 장이 하나씩 있습니다. 장마다 하늘과 돌의 색, 음악, 새로운 장치가 바뀌고, 그늘이 되어 버린 링커들을 되돌리기 위해 흩어진 코어 조각을 모으는 여정이 이어집니다.</p>
+    </div>
+    <ol class="journey-strip">
+      <li><img src="assets/img/journey_hub.jpg" width="720" height="911" loading="lazy" alt="큐브 허브: 떠 있는 큐브 위에 링커가 서 있다."><div class="label"><small lang="en">START</small><span lang="en">CUBE HUB</span></div></li>
+      <li><img src="assets/img/journey_ch1.jpg" width="720" height="911" loading="lazy" alt="1장 Fragments: 높이가 다른 탑 사이의 길."><div class="label"><small lang="en">CHAPTER 1</small><span lang="en">FRAGMENTS</span></div></li>
+      <li><img src="assets/img/journey_ch2.jpg" width="720" height="911" loading="lazy" alt="2장 Paths: 복숭아빛 아치와 기둥 사이의 길."><div class="label"><small lang="en">CHAPTER 2</small><span lang="en">PATHS</span></div></li>
+      <li><img src="assets/img/journey_ch3.jpg" width="720" height="911" loading="lazy" alt="3장 Fading: 맞물린 큐브 위의 링커."><div class="label"><small lang="en">CHAPTER 3</small><span lang="en">FADING</span></div></li>
+      <li><img src="assets/img/journey_ch4.jpg" width="720" height="911" loading="lazy" alt="4장 Signs: 보랏빛 하늘 아래 계단과 문양."><div class="label"><small lang="en">CHAPTER 4</small><span lang="en">SIGNS</span></div></li>
+      <li><img src="assets/img/journey_ch5.jpg" width="720" height="911" loading="lazy" alt="5장 Gathering: 금빛 구름 위의 계단 구조물."><div class="label"><small lang="en">CHAPTER 5</small><span lang="en">GATHERING</span></div></li>
+      <li><img src="assets/img/journey_ch6.jpg" width="720" height="911" loading="lazy" alt="6장 Dark: 등불만 비추는 어둠 속의 길."><div class="label"><small lang="en">CHAPTER 6</small><span lang="en">DARK</span></div></li>
+      <li><img src="assets/img/journey_ch7.jpg" width="720" height="911" loading="lazy" alt="7장 Meadow: 꽃이 핀 풀밭 위의 링커."><div class="label"><small lang="en">CHAPTER 7</small><span lang="en">MEADOW</span></div></li>
+    </ol>
+  </section>
+
+  <section class="more" aria-labelledby="more-title">
+    <div class="wrap">
+      <h2 id="more-title">스테이지와 맵 에디터</h2>
+      <p>여정 밖에서는 장치별로 묶인 퍼즐 스테이지를 풀고, 맵 에디터에서 블록과 문양, 장치를 놓아 직접 퍼즐을 만들어 바로 플레이할 수 있습니다.</p>
+      <div class="pair">
+        <figure>
+          <img src="assets/img/stages.jpg" width="1400" height="788" loading="lazy" alt="스테이지 선택 화면: 장치별 페이지 카드가 나란히 놓여 있다.">
+          <figcaption>퍼즐 스테이지. 장치별 페이지에서 고른다.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/editor.jpg" width="1400" height="788" loading="lazy" alt="맵 에디터 화면: 블록 위에 문과 링커가 놓여 있고 아래에 도구 막대가 있다.">
+          <figcaption>맵 에디터. 블록, 문양, 문, 코어 조각을 놓아 퍼즐을 만든다.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="play-section" id="play" aria-labelledby="play-title">
+    <div class="wrap grid">
+      <img class="linker" src="assets/img/linker.webp" width="720" height="1069" loading="lazy" alt="돌 블록 위에 선 링커가 위를 올려다본다.">
+      <div class="words">
+        <h2 id="play-title">플레이하기</h2>
+        <ul class="platforms">
+          <li><b>Android</b><span class="where">Google Play</span><span class="soon">출시 준비 중</span></li>
+          <li><b>Windows PC</b><span class="where">Steam</span><span class="soon">출시 준비 중</span></li>
+        </ul>
+        <p class="note">출시되면 이곳에 다운로드 링크가 생깁니다.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="name" lang="en">SEMONEMO</span>
+    <span>Seonline의 개인 개발 프로젝트, Unity 6로 만들었습니다.</span>
+    <nav aria-label="바닥글">
+      <a href="https://sites.google.com/view/semonemo-privacy" rel="noopener">개인정보처리방침</a>
+      <span>© 2026 Seonline</span>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  // The trailer (on YouTube) loads only when asked for, so the page stays light.
+  const YOUTUBE_ID = 'zDDTI36tjw8';
+  const player = document.querySelector('.player');
+  player.addEventListener('click', () => {
+    const el = document.createElement('iframe');
+    el.src = `https://www.youtube-nocookie.com/embed/${YOUTUBE_ID}?autoplay=1&rel=0&playsinline=1`;
+    el.title = 'SEMONEMO 트레일러';
+    el.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    el.allowFullscreen = true;
+    player.replaceChildren(el);
+    player.removeAttribute('aria-label');
+    player.style.cursor = 'default';
+    el.focus?.();
+  }, { once: true });
+</script>
+</body>
+</html>
