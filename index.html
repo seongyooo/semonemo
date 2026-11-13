@@ -237,7 +237,23 @@ footer a { text-underline-offset: 3px; }
   .play-section .words { padding-bottom: 80px; }
 }
 
+/* the title screen's music, off until asked for */
+.sound {
+  position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 10;
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(36, 42, 74, .18);
+  background: rgba(243, 240, 244, .82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--ink); cursor: pointer; display: grid; place-items: center;
+  box-shadow: 0 8px 24px -12px rgba(36, 42, 74, .5);
+}
+.sound svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sound .on { display: none; }
+.sound[aria-pressed="true"] .on { display: inline; }
+.sound[aria-pressed="true"] .off { display: none; }
+.sound[aria-pressed="true"] .waves { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .sound .waves { animation: none !important; }
   html { scroll-behavior: auto; }
   .logo-letters path, .logo-shapes path, .slogan { animation: none; stroke-dashoffset: 0; fill-opacity: 1; opacity: 1; }
   .logo-letters path { stroke-width: 0; }
@@ -363,11 +379,47 @@ footer a { text-underline-offset: 3px; }
   </div>
 </footer>
 
+<button type="button" class="sound" aria-pressed="false" aria-label="배경음 켜기">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><g class="on waves"><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></g><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+</button>
+<audio class="music" src="assets/audio/title.m4a" loop preload="none"></audio>
+
 <script>
+  // The title screen's music: off until asked for, faded in and out, quiet while the trailer plays or the page is away.
+  const music = document.querySelector('.music');
+  const sound = document.querySelector('.sound');
+  let wanted = false, fade = 0;
+  const ramp = (to, then) => {
+    cancelAnimationFrame(fade);
+    const from = music.volume, t0 = performance.now(), ms = 1200;
+    const tick = now => {
+      const k = Math.min(1, (now - t0) / ms);
+      music.volume = from + (to - from) * k;
+      if (k < 1) fade = requestAnimationFrame(tick); else then?.();
+    };
+    fade = requestAnimationFrame(tick);
+  };
+  const start = () => { music.volume = 0; music.play().then(() => ramp(.6)).catch(() => { wanted = false; show(false); }); };
+  const stop = () => ramp(0, () => music.pause());
+  const show = on => {
+    sound.setAttribute('aria-pressed', on);
+    sound.setAttribute('aria-label', on ? '배경음 끄기' : '배경음 켜기');
+  };
+  sound.addEventListener('click', () => {
+    wanted = !wanted;
+    show(wanted);
+    wanted ? start() : stop();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!wanted) return;
+    document.hidden ? music.pause() : start();
+  });
+
   // The trailer (on YouTube) loads only when asked for, so the page stays light.
   const YOUTUBE_ID = 'zDDTI36tjw8';
   const player = document.querySelector('.player');
   player.addEventListener('click', () => {
+    if (wanted) { wanted = false; show(false); stop(); }
     const el = document.createElement('iframe');
     el.src = `https://www.youtube-nocookie.com/embed/${YOUTUBE_ID}?autoplay=1&rel=0&playsinline=1`;
     el.title = 'SEMONEMO 트레일러';
