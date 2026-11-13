@@ -57,18 +57,39 @@ a { color: inherit; }
 .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
 
 /* ---------------------------------------------------------------- the opening: the sky, the name written in */
+@property --hero-ink { syntax: "<color>"; inherits: true; initial-value: #242A4A; }
+@property --hero-ink-2 { syntax: "<color>"; inherits: true; initial-value: #4A4F6E; }
+@property --hero-button { syntax: "<color>"; inherits: true; initial-value: #242A4A; }
+@property --hero-button-ink { syntax: "<color>"; inherits: true; initial-value: #FFFFFF; }
 .hero {
+  --hero-ink: var(--ink); --hero-ink-2: var(--ink-2); --hero-button: var(--ink); --hero-button-ink: #fff;
   position: relative;
   text-align: center;
   padding-top: clamp(64px, 13vh, 132px);
-  background: linear-gradient(180deg, var(--sky-hi) 0%, var(--sky) 30%, var(--dusk) 64%, var(--mist) 86%, var(--paper) 100%);
+  background: var(--paper);
+  color: var(--hero-ink);
   overflow: hidden;
+  transition: --hero-ink 2s ease, --hero-ink-2 2s ease, --hero-button 2s ease, --hero-button-ink 2s ease;
 }
+/* In chapter 6's dark the words turn to the colour of paper; the gold shapes stay as they are. */
+.hero.is-dark { --hero-ink: #EEEAF2; --hero-ink-2: #C9C6DA; --hero-button: #EEEAF2; --hero-button-ink: #1A1E38; }
+.hero > :not(.hero-sky) { position: relative; z-index: 1; }
+.hero p { color: var(--hero-ink-2); }
+
+/* each chapter's sky, read from its picture, one over another */
+.hero-sky { position: absolute; inset: 0; z-index: 0; }
+.hero-sky i { position: absolute; inset: 0; opacity: 0; transition: opacity 2s ease; }
+.hero-sky i.is-on { opacity: 1; }
+.sky-ch2 { background: linear-gradient(180deg, var(--sky-hi) 0%, var(--sky) 30%, var(--dusk) 64%, var(--mist) 86%, var(--paper) 100%); }
+.sky-ch3 { background: linear-gradient(180deg, #7EA1E1 0%, #8DB0EC 30%, #B5C5E8 64%, #DADFEF 86%, var(--paper) 100%); }
+.sky-ch4 { background: linear-gradient(180deg, #837DC7 0%, #958CD1 30%, #B9A0CD 64%, #DCD0E4 86%, var(--paper) 100%); }
+.sky-ch6 { background: linear-gradient(180deg, #02020A 0%, #03030E 30%, #070A1C 64%, #1B1E3A 93%, var(--paper) 100%); }
+.sky-ch7 { background: linear-gradient(180deg, #4F88AB 0%, #6A9BBF 30%, #B4C4CF 64%, #DCDEE2 86%, var(--paper) 100%); }
 .hero h1 { margin: 0; }
 .logo { width: min(84vw, 660px); height: auto; margin: 0 auto; overflow: visible; }
 .logo-letters path {
-  fill: var(--ink); fill-opacity: 0;
-  stroke: var(--ink); stroke-width: 1.1;
+  fill: var(--hero-ink); fill-opacity: 0;
+  stroke: var(--hero-ink); stroke-width: 1.1;
   stroke-dasharray: 1; stroke-dashoffset: 1;
   animation: write .95s cubic-bezier(.5, .05, .35, 1) forwards, ink .7s ease forwards;
   animation-delay: calc(var(--i) * .13s + .25s), calc(var(--i) * .13s + 1s);
@@ -92,7 +113,18 @@ a { color: inherit; }
 }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-.hero picture { display: block; margin-top: clamp(-8px, -2vw, -40px); }
+.hero-art { margin-top: clamp(-8px, -2vw, -40px); }
+.hero-art picture { display: block; opacity: 0; transition: opacity 2s ease; }
+.hero-art picture:not(:first-child) { position: absolute; inset: 0; }
+.hero-art picture.is-on { opacity: 1; }
+/* the chapter now passing, named as the game's own title card names it */
+.scene-names { position: relative; height: 1.4em; margin: 0 0 clamp(8px, 1.4vw, 14px); pointer-events: none; font: 400 clamp(.82rem, 1.4vw, .95rem)/1.4 var(--latin); }
+.scene-names p {
+  position: absolute; left: 0; right: 0; top: 0; margin: 0 auto; max-width: none; white-space: nowrap;
+  color: var(--hero-ink-2); opacity: 0; transition: opacity 1.2s ease; font: inherit; letter-spacing: .24em;
+}
+.scene-names p.is-on { opacity: 1; transition-delay: .6s; }
+.scene-names small { font-size: .78em; margin-right: .9em; opacity: .8; }
 .hero picture img {
   width: 100%;
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 76%, transparent 100%);
@@ -116,9 +148,11 @@ a { color: inherit; }
   transition: transform .2s ease, background .2s ease;
 }
 .button:hover { background: #31385F; }
+.hero .button { background: var(--hero-button); color: var(--hero-button-ink); }
+.hero .button:hover { background: var(--hero-button); filter: brightness(1.15); }
 .button:active { transform: translateY(1px); }
 .button svg { width: 14px; height: 14px; }
-.status { color: var(--ink-2); font-size: .95rem; }
+.status { color: var(--hero-ink-2); font-size: .95rem; }
 .status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 9px 2px 0; border-radius: 50%; background: var(--gold-glow); box-shadow: 0 0 0 4px rgba(255, 189, 56, .22); }
 
 /* ---------------------------------------------------------------- sections */
@@ -162,6 +196,34 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
 .marks svg { width: 34px; height: 34px; fill: none; stroke: var(--gold-ink); stroke-width: 2.4; }
 .rule figure { margin: 0; }
 .rule img { border-radius: 10px; }
+/* chapter 2's triangle: drag to turn the view until the path closes, then the Linker walks it */
+.turn {
+  position: relative; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden;
+  background: #E9DCDD; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  outline-offset: 4px;
+}
+.turn.held { cursor: grabbing; }
+.turn.closed { cursor: default; }
+.turn img, .turn canvas, .turn video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: 0; }
+.turn video { opacity: 0; transition: opacity .3s ease; }
+.turn.walking video { opacity: 1; }
+.turn::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(60% 55% at 42% 62%, rgba(255, 219, 128, .75), rgba(255, 189, 56, 0) 70%);
+}
+.turn.closed::after { animation: joined 1.4s ease-out; }
+@keyframes joined { 18% { opacity: 1; } to { opacity: 0; } }
+.turn .hint, .turn .again {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
+  background: rgba(243, 240, 244, .88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--ink); font: 500 .92rem/1 var(--sans); white-space: nowrap;
+  transition: opacity .4s ease;
+}
+.turn .hint svg { width: 26px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.turn.touched .hint, .turn.closed .hint { opacity: 0; }
+.turn .again { border: 0; cursor: pointer; opacity: 0; pointer-events: none; }
+.turn.done .again { opacity: 1; pointer-events: auto; }
 .rule figcaption, .more figcaption { margin-top: 12px; color: var(--ink-3); font-size: .95rem; }
 
 /* the journey: the cube hub and the seven chapters in order */
@@ -260,19 +322,52 @@ footer a { text-underline-offset: 3px; }
   .logo-letters path { stroke-width: 0; }
   .logo-shapes .halo { opacity: .42; }
   .player img, .button { transition: none; }
+  .hero, .hero-sky i, .hero-art picture { transition: none; }
 }
 </style>
 </head>
 <body>
 
 <header class="hero">
+  <div class="hero-sky" aria-hidden="true">
+    <i class="sky-ch2 is-on"></i>
+    <i class="sky-ch3"></i>
+    <i class="sky-ch4"></i>
+    <i class="sky-ch6"></i>
+    <i class="sky-ch7"></i>
+  </div>
   <h1><svg class="logo" viewBox="-8 16.0 756.24 96.0" role="img" aria-labelledby="logo-title" xmlns="http://www.w3.org/2000/svg"><title id="logo-title">SEMONEMO 세모네모</title><g class="logo-letters"><path style="--i:0" pathLength="1" d="M3.7 82.3Q3.90 86.6 5.95 90.1Q8.0 93.6 11.55 96.05Q15.10 98.5 19.90 99.85Q24.70 101.2 30.40 101.2Q36.2 101.2 40.85 99.80Q45.5 98.4 48.8 95.80Q52.1 93.2 53.90 89.5Q55.7 85.8 55.7 81.3Q55.7 75.1 52.6 71.14Q49.5 67.19 44.85 64.55Q40.2 61.9 34.75 60.09Q29.3 58.3 24.65 56.3Q20.0 54.3 16.9 51.69Q13.8 49.09 13.8 44.8Q13.8 42.4 14.85 40.3Q15.9 38.19 17.95 36.64Q20.0 35.09 23.0 34.15Q26.0 33.2 29.90 33.2Q36.4 33.2 40.95 35.95Q45.5 38.69 46.30 44.59H53.1Q52.5 40.9 50.40 37.95Q48.30 35.0 45.10 32.94Q41.90 30.89 37.85 29.84Q33.80 28.79 29.40 28.79Q24.8 28.79 20.65 30.0Q16.5 31.20 13.35 33.5Q10.20 35.8 8.35 39.3Q6.5 42.8 6.5 47.3Q6.5 53.19 9.5 56.8Q12.5 60.4 17.05 62.8Q21.6 65.19 26.90 66.89Q32.2 68.6 36.75 70.75Q41.30 72.9 44.30 76.0Q47.30 79.1 47.30 84.3Q47.30 90.8 42.55 93.8Q37.80 96.8 29.90 96.8Q23.6 96.8 19.8 95.15Q16.0 93.5 14.0 91.2Q12.0 88.9 11.3 86.45Q10.60 84.0 10.5 82.3Z"/><path style="--i:1" pathLength="1" d="M90.5 30.0V100.0H135.7V94.5H99.6V65.19H130.6V60.59H99.6V35.5H135.7V30.0Z"/><path style="--i:2" pathLength="1" d="M173.5 30.0H166.7V100.0H171.1V42.9H171.5L202.39 101.2H204.2L235.8 43.3H236.2V100.0H245.3V30.0H238.39L206.0 90.1H205.6Z"/><path style="--i:3" pathLength="1" d="M440.83 30.0V83.5H440.43L384.93 28.79H384.43V100.0H389.03V46.5H389.43L444.93 101.2H445.43V30.0Z"/><path style="--i:4" pathLength="1" d="M485.43 30.0V100.0H530.63V94.5H494.53V65.19H525.53V60.59H494.53V35.5H530.63V30.0Z"/><path style="--i:5" pathLength="1" d="M568.43 30.0H561.63V100.0H566.03V42.9H566.43L597.33 101.2H599.13L630.73 43.3H631.13V100.0H640.23V30.0H633.33L600.93 90.1H600.53Z"/></g><g class="logo-shapes" stroke-width="7.62"><path class="halo" style="--i:3" pathLength="1" d="M273.30,100.00 L356.44,100.00 L314.87,28.00 Z"/><path style="--i:3" pathLength="1" d="M273.30,100.00 L356.44,100.00 L314.87,28.00 Z"/><path class="halo" style="--i:7" pathLength="1" d="M668.24,100.00 L740.24,100.00 L740.24,28.00 L668.24,28.00 Z"/><path style="--i:7" pathLength="1" d="M668.24,100.00 L740.24,100.00 L740.24,28.00 L668.24,28.00 Z"/></g></svg></h1>
   <p class="slogan" lang="en">Change Your Perspective.</p>
-  <picture>
-    <source media="(min-width: 760px)" srcset="assets/img/hero_wide.jpg" width="2400" height="1350">
-    <img src="assets/img/hero_tall.jpg" width="1200" height="1463" alt="게임 화면: 하늘에 떠 있는 불가능한 삼각형 길 위에 링커가 서 있고, 건너편 섬의 문까지 코어의 빛이 이어진다.">
-  </picture>
+  <div class="hero-art">
+    <picture class="is-on" data-sky="ch2">
+      <source media="(min-width: 760px)" srcset="assets/img/scene_ch2_wide.jpg" width="2400" height="1350">
+      <img src="assets/img/scene_ch2_tall.jpg" width="1200" height="1463" alt="게임 화면 (2장): 하늘에 떠 있는 불가능한 삼각형 길 위에 링커가 서 있고, 건너편 섬의 문까지 코어의 빛이 이어진다.">
+    </picture>
+    <picture data-sky="ch3" aria-hidden="true">
+      <source media="(min-width: 760px)" data-srcset="assets/img/scene_ch3_wide.jpg" width="2400" height="1350">
+      <img data-src="assets/img/scene_ch3_tall.jpg" width="1200" height="1463" alt="게임 화면 (3장): 속이 빈 큐브 모양의 길 위에 링커가 서 있고, 코어의 빛이 문까지 호를 그린다.">
+    </picture>
+    <picture data-sky="ch4" aria-hidden="true">
+      <source media="(min-width: 760px)" data-srcset="assets/img/scene_ch4_wide.jpg" width="2400" height="1350">
+      <img data-src="assets/img/scene_ch4_tall.jpg" width="1200" height="1463" alt="게임 화면 (4장): 보랏빛 하늘 아래 계단과 문, 문 안에 링커가 서 있다.">
+    </picture>
+    <picture data-sky="ch6" data-dark aria-hidden="true">
+      <source media="(min-width: 760px)" data-srcset="assets/img/scene_ch6_wide.jpg" width="2400" height="1350">
+      <img data-src="assets/img/scene_ch6_tall.jpg" width="1200" height="1463" alt="게임 화면 (6장): 등불만 비추는 어둠 속 계단 위의 링커.">
+    </picture>
+    <picture data-sky="ch7" aria-hidden="true">
+      <source media="(min-width: 760px)" data-srcset="assets/img/scene_ch7_wide.jpg" width="2400" height="1350">
+      <img data-src="assets/img/scene_ch7_tall.jpg" width="1200" height="1463" alt="게임 화면 (7장): 꽃이 핀 풀밭 위의 링커.">
+    </picture>
+  </div>
   <div class="hero-words wrap">
+    <div class="scene-names" lang="en" aria-hidden="true">
+      <p data-sky="ch2" class="is-on"><small>CHAPTER 2</small>PATHS</p>
+      <p data-sky="ch3"><small>CHAPTER 3</small>FADING</p>
+      <p data-sky="ch4"><small>CHAPTER 4</small>SIGNS</p>
+      <p data-sky="ch6"><small>CHAPTER 6</small>DARK</p>
+      <p data-sky="ch7"><small>CHAPTER 7</small>MEADOW</p>
+    </div>
     <p class="tagline">시점을 돌려 착시로 길을 잇는 퍼즐 게임</p>
     <div class="cta-row">
       <a class="button" href="#trailer"><svg viewBox="0 0 10 12" aria-hidden="true"><path d="M0 0 L10 6 L0 12 Z" fill="currentColor"/></svg>트레일러 보기</a>
@@ -308,8 +403,15 @@ footer a { text-underline-offset: 3px; }
         <p class="note">클릭이나 터치로 걷고, 드래그나 스와이프로 시점을 돌립니다.</p>
       </div>
       <figure>
-        <img src="assets/img/rule.jpg" width="1600" height="1200" loading="lazy" alt="게임 화면: 속이 빈 큐브 모양의 길, 큐브 안쪽에 링커가 서 있다.">
-        <figcaption>3장 Fading. 보는 방향에 따라 큐브의 안과 밖이 이어진다.</figcaption>
+        <div class="turn" tabindex="0" role="slider" aria-label="시점 돌리기" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+             aria-describedby="turn-caption">
+          <img src="assets/illusion/turn_00.webp" width="960" height="720" loading="lazy" alt="게임 화면 (2장): 위에서 내려다본 길, 아직 이어지지 않았다.">
+          <canvas width="960" height="720" aria-hidden="true"></canvas>
+          <video muted playsinline preload="none" aria-hidden="true" src="assets/illusion/walk.mp4"></video>
+          <span class="hint" aria-hidden="true"><svg viewBox="0 0 26 14"><path d="M6 2 L1 7 L6 12 M20 2 L25 7 L20 12 M1 7 H25"/></svg>옆으로 끌어서 시점 돌리기</span>
+          <button type="button" class="again">다시 돌려 보기</button>
+        </div>
+        <figcaption id="turn-caption">2장 Paths. 실제 게임 화면입니다. 시점을 끝까지 돌리면 떨어진 길이 하나의 삼각형으로 이어집니다.</figcaption>
       </figure>
     </div>
   </section>
@@ -386,6 +488,142 @@ footer a { text-underline-offset: 3px; }
 <audio class="music" src="assets/audio/title.m4a" loop preload="none"></audio>
 
 <script>
+  // The opening: chapter 2, 3, 4, 6's dark and 7's meadow pass behind the name, one every few seconds, while it is
+  // on screen. The first picture loads with the page, the others once it has loaded.
+  (() => {
+    const hero = document.querySelector('.hero');
+    const pics = [...hero.querySelectorAll('.hero-art picture')];
+    const names = Object.fromEntries([...hero.querySelectorAll('.scene-names p')].map(p => [p.dataset.sky, p]));
+    const skies = Object.fromEntries([...hero.querySelectorAll('.hero-sky i')].map(i => [i.className.match(/sky-(\w+)/)[1], i]));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const HOLD = 6500, FIRST = 8000;
+    let at = 0, timer = 0, seen = true;
+    const ready = p => { const img = p.querySelector('img'); return img.complete && img.naturalWidth > 0; };
+    const show = n => {
+      const was = pics[at], next = pics[n];
+      was.classList.remove('is-on'); skies[was.dataset.sky].classList.remove('is-on');
+      next.classList.add('is-on'); skies[next.dataset.sky].classList.add('is-on');
+      names[was.dataset.sky].classList.remove('is-on'); names[next.dataset.sky].classList.add('is-on');
+      hero.classList.toggle('is-dark', next.hasAttribute('data-dark'));
+      at = n;
+    };
+    const tick = () => {
+      timer = 0;
+      if (!seen || document.hidden) return;
+      const n = (at + 1) % pics.length;
+      if (ready(pics[n])) show(n);
+      timer = setTimeout(tick, HOLD);
+    };
+    const run = delay => { if (!timer) timer = setTimeout(tick, delay); };
+    const halt = () => { clearTimeout(timer); timer = 0; };
+    addEventListener('load', () => {
+      for (const p of pics.slice(1)) {
+        p.querySelectorAll('[data-srcset]').forEach(s => s.srcset = s.dataset.srcset);
+        p.querySelectorAll('[data-src]').forEach(i => i.src = i.dataset.src);
+      }
+      run(FIRST);
+    });
+    new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen ? run(HOLD) : halt(); }, { threshold: .25 }).observe(hero);
+    document.addEventListener('visibilitychange', () => document.hidden ? halt() : seen && run(HOLD));
+  })();
+
+  // The rule, by hand: dragging sideways turns the view through chapter 2's take, frame by frame. Let go and it runs on
+  // a little and slows; turned all the way, the triangle closes, glows, and the Linker walks the joined path.
+  (() => {
+    const box = document.querySelector('.turn');
+    const canvas = box.querySelector('canvas'), ctx = canvas.getContext('2d');
+    const video = box.querySelector('video'), again = box.querySelector('.again');
+    const N = 60, frames = [];
+    let loaded = 0, at = 0, shown = -1, held = null, coast = 0, closed = false;
+    const draw = () => {
+      const i = Math.round(at * (N - 1));
+      if (i === shown || !frames[i]?.complete) return;
+      ctx.drawImage(frames[i], 0, 0, canvas.width, canvas.height);
+      shown = i;
+      box.setAttribute('aria-valuenow', Math.round(at * 100));
+    };
+    const close = () => {
+      closed = true; at = 1; draw();
+      box.classList.add('closed');
+      box.setAttribute('aria-valuetext', '길이 이어졌습니다');
+      setTimeout(() => {
+        video.currentTime = 0;
+        video.play().then(() => box.classList.add('walking')).catch(() => box.classList.add('done'));
+      }, 700);
+    };
+    const set = v => {
+      if (closed) return;
+      at = Math.min(1, Math.max(0, v));
+      draw();
+      if (at >= 1) close();
+    };
+    video.addEventListener('ended', () => box.classList.add('done'));
+    again.addEventListener('click', e => {
+      e.stopPropagation();
+      box.classList.remove('closed', 'walking', 'done');
+      box.removeAttribute('aria-valuetext');
+      video.pause();
+      closed = false; set(0);
+      box.focus();
+    });
+    const load = () => {
+      for (let i = 0; i < N; i++) {
+        const img = new Image();
+        img.onload = () => { if (++loaded === 1 || i === Math.round(at * (N - 1))) { shown = -1; draw(); } };
+        img.src = `assets/illusion/turn_${String(i).padStart(2, '0')}.webp`;
+        frames[i] = img;
+      }
+      video.preload = 'auto';
+    };
+    new IntersectionObserver((es, io) => { if (es[0].isIntersecting) { load(); io.disconnect(); } }, { rootMargin: '600px' }).observe(box);
+    // A full turn is about one and a half widths of the picture.
+    const per = () => box.clientWidth * 1.5;
+    box.addEventListener('pointerdown', e => {
+      if (closed || e.button !== 0) return;
+      cancelAnimationFrame(coast);
+      held = { x: e.clientX, y: e.clientY, at, id: e.pointerId, trail: [{ t: e.timeStamp, x: e.clientX }], on: false };
+      box.classList.add('touched');
+    });
+    box.addEventListener('pointermove', e => {
+      if (!held || e.pointerId !== held.id) return;
+      const dx = e.clientX - held.x;
+      if (!held.on) {
+        // On a phone an upright swipe is the page scrolling; only a sideways one turns the view.
+        if (Math.abs(dx) < 6) return;
+        if (Math.abs(e.clientY - held.y) > Math.abs(dx)) { held = null; return; }
+        held.on = true; box.classList.add('held'); box.setPointerCapture(e.pointerId);
+      }
+      set(held.at + dx / per());
+      held.trail.push({ t: e.timeStamp, x: e.clientX });
+      while (held.trail.length > 2 && e.timeStamp - held.trail[0].t > 100) held.trail.shift();
+    });
+    const letGo = e => {
+      if (!held) return;
+      const { trail, on } = held;
+      held = null; box.classList.remove('held');
+      if (!on || closed) return;
+      const a = trail[0], b = trail[trail.length - 1];
+      let v = e.timeStamp - b.t > 60 || b.t === a.t ? 0 : (b.x - a.x) / (b.t - a.t) / per();   // turn per ms
+      let last = performance.now();
+      const run = now => {
+        const dt = now - last; last = now;
+        v *= Math.pow(.992, dt);
+        set(at + v * dt);
+        if (!closed && Math.abs(v) > .00002 && at > 0 && at < 1) coast = requestAnimationFrame(run);
+      };
+      coast = requestAnimationFrame(run);
+    };
+    box.addEventListener('pointerup', letGo);
+    box.addEventListener('pointercancel', letGo);
+    box.addEventListener('dragstart', e => e.preventDefault());
+    box.addEventListener('keydown', e => {
+      const k = { ArrowRight: .05, ArrowUp: .05, ArrowLeft: -.05, ArrowDown: -.05 }[e.key];
+      if (k) { e.preventDefault(); box.classList.add('touched'); set(at + k); }
+      if (e.key === 'End') { e.preventDefault(); set(1); }
+      if (e.key === 'Home') { e.preventDefault(); set(0); }
+    });
+  })();
+
   // The title screen's music: off until asked for, faded in and out, quiet while the trailer plays or the page is away.
   const music = document.querySelector('.music');
   const sound = document.querySelector('.sound');
