@@ -213,15 +213,26 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
 }
 .turn.closed::after { animation: joined 1.4s ease-out; }
 @keyframes joined { 18% { opacity: 1; } to { opacity: 0; } }
-.turn .hint, .turn .again {
+.turn .again {
   position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
   display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
   background: rgba(243, 240, 244, .88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   color: var(--ink); font: 500 .92rem/1 var(--sans); white-space: nowrap;
   transition: opacity .4s ease;
 }
-.turn .hint svg { width: 26px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.turn.touched .hint, .turn.closed .hint { opacity: 0; }
+.turn .veil {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
+  padding: 20px; text-align: center; color: #fff;
+  background: rgba(30, 34, 62, .52); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
+  transition: opacity .5s ease, visibility .5s;
+}
+.turn .veil b { font: 400 clamp(1.15rem, 2.4vw, 1.5rem)/1.35 var(--serif); letter-spacing: -.01em; }
+.turn .veil small { font: 500 .9rem/1.4 var(--sans); color: rgba(255, 255, 255, .82); }
+.turn .gesture { width: 132px; height: 44px; overflow: visible; }
+.turn .gesture path { fill: none; stroke: rgba(255, 255, 255, .7); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.turn .gesture circle { fill: #fff; filter: drop-shadow(0 0 8px rgba(255, 219, 128, .9)); animation: swipe 2.2s cubic-bezier(.45, 0, .25, 1) infinite; }
+@keyframes swipe { 0%, 100% { transform: translateX(-34px); } 50% { transform: translateX(34px); } }
+.turn.touched .veil, .turn.closed .veil { opacity: 0; visibility: hidden; }
 .turn .again { border: 0; cursor: pointer; opacity: 0; pointer-events: none; }
 .turn.done .again { opacity: 1; pointer-events: auto; }
 .rule figcaption, .more figcaption { margin-top: 12px; color: var(--ink-3); font-size: .95rem; }
@@ -326,6 +337,7 @@ footer a { text-underline-offset: 3px; }
   .logo-shapes .halo { opacity: .42; }
   .player img, .button { transition: none; }
   .hero, .hero-sky i, .hero-art picture { transition: none; }
+  .turn .gesture circle { animation: none; }
 }
 </style>
 </head>
@@ -411,7 +423,11 @@ footer a { text-underline-offset: 3px; }
           <img src="assets/illusion/turn_00.webp" width="960" height="720" loading="lazy" alt="게임 화면 (2장): 위에서 내려다본 길, 아직 이어지지 않았다.">
           <canvas width="960" height="720" aria-hidden="true"></canvas>
           <video muted playsinline preload="none" aria-hidden="true" src="assets/illusion/walk.mp4"></video>
-          <span class="hint" aria-hidden="true"><svg viewBox="0 0 26 14"><path d="M6 2 L1 7 L6 12 M20 2 L25 7 L20 12 M1 7 H25"/></svg>옆으로 끌어서 시점 돌리기</span>
+          <div class="veil" aria-hidden="true">
+            <svg class="gesture" viewBox="-66 -22 132 44"><path d="M-48 -9 L-60 0 L-48 9 M48 -9 L60 0 L48 9"/><circle r="9"/></svg>
+            <b>옆으로 끌어서 시점을 돌려 보세요</b>
+            <small>직접 돌려서 떨어진 길을 이어 보세요</small>
+          </div>
           <button type="button" class="again">다시 돌려 보기</button>
         </div>
         <figcaption id="turn-caption">2장 Paths. 실제 게임 화면입니다. 시점을 끝까지 돌리면 떨어진 길이 하나의 삼각형으로 이어집니다.</figcaption>
@@ -537,7 +553,21 @@ footer a { text-underline-offset: 3px; }
     const canvas = box.querySelector('canvas'), ctx = canvas.getContext('2d');
     const video = box.querySelector('video'), again = box.querySelector('.again');
     const N = 60, frames = [];
-    let loaded = 0, at = 0, shown = -1, held = null, coast = 0, closed = false;
+    let loaded = 0, at = 0, shown = -1, held = null, coast = 0, closed = false, sway = 0, swayWait = 0, inView = false;
+    const touch = () => { box.classList.add('touched'); cancelAnimationFrame(sway); clearTimeout(swayWait); };
+    // Until it is touched, the view turns a little way and back every few seconds while it is on screen.
+    const swayOnce = () => {
+      if (box.classList.contains('touched') || closed || loaded < N || !inView) return;
+      const t0 = performance.now(), ms = 1800;
+      const frame = now => {
+        const k = Math.min(1, (now - t0) / ms);
+        at = .16 * Math.sin(Math.PI * k) ** 2; draw();
+        if (k < 1) sway = requestAnimationFrame(frame);
+        else { sway = 0; swayWait = setTimeout(swayOnce, 3200); }
+      };
+      sway = requestAnimationFrame(frame);
+    };
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const draw = () => {
       const i = Math.round(at * (N - 1));
       if (i === shown || !frames[i]?.complete) return;
@@ -572,20 +602,26 @@ footer a { text-underline-offset: 3px; }
     const load = () => {
       for (let i = 0; i < N; i++) {
         const img = new Image();
-        img.onload = () => { if (++loaded === 1 || i === Math.round(at * (N - 1))) { shown = -1; draw(); } };
+        img.onload = () => {
+          if (++loaded === 1 || i === Math.round(at * (N - 1))) { shown = -1; draw(); }
+          if (loaded === N && !reduced) { clearTimeout(swayWait); swayWait = setTimeout(swayOnce, 900); }
+        };
         img.src = `assets/illusion/turn_${String(i).padStart(2, '0')}.webp`;
         frames[i] = img;
       }
       video.preload = 'auto';
     };
     new IntersectionObserver((es, io) => { if (es[0].isIntersecting) { load(); io.disconnect(); } }, { rootMargin: '600px' }).observe(box);
+    new IntersectionObserver(es => {
+      inView = es[0].isIntersecting;
+      if (inView && !reduced && !sway) { clearTimeout(swayWait); swayWait = setTimeout(swayOnce, 900); }
+    }, { threshold: .6 }).observe(box);
     // A full turn is about one and a half widths of the picture.
     const per = () => box.clientWidth * 1.5;
     box.addEventListener('pointerdown', e => {
       if (closed || e.button !== 0) return;
-      cancelAnimationFrame(coast);
+      cancelAnimationFrame(coast); cancelAnimationFrame(sway); clearTimeout(swayWait); sway = 0;
       held = { x: e.clientX, y: e.clientY, at, id: e.pointerId, trail: [{ t: e.timeStamp, x: e.clientX }], on: false };
-      box.classList.add('touched');
     });
     box.addEventListener('pointermove', e => {
       if (!held || e.pointerId !== held.id) return;
@@ -594,7 +630,7 @@ footer a { text-underline-offset: 3px; }
         // On a phone an upright swipe is the page scrolling; only a sideways one turns the view.
         if (Math.abs(dx) < 6) return;
         if (Math.abs(e.clientY - held.y) > Math.abs(dx)) { held = null; return; }
-        held.on = true; box.classList.add('held'); box.setPointerCapture(e.pointerId);
+        held.on = true; box.classList.add('held'); box.setPointerCapture(e.pointerId); touch();
       }
       set(held.at + dx / per());
       held.trail.push({ t: e.timeStamp, x: e.clientX });
@@ -604,6 +640,8 @@ footer a { text-underline-offset: 3px; }
       if (!held) return;
       const { trail, on } = held;
       held = null; box.classList.remove('held');
+      if (!on && e.type === 'pointerup') touch();   // a tap lifts the veil too
+      if (!on && !box.classList.contains('touched') && !reduced) { clearTimeout(swayWait); swayWait = setTimeout(swayOnce, 2500); }
       if (!on || closed) return;
       const a = trail[0], b = trail[trail.length - 1];
       let v = e.timeStamp - b.t > 60 || b.t === a.t ? 0 : (b.x - a.x) / (b.t - a.t) / per();   // turn per ms
@@ -621,8 +659,8 @@ footer a { text-underline-offset: 3px; }
     box.addEventListener('dragstart', e => e.preventDefault());
     box.addEventListener('keydown', e => {
       const k = { ArrowRight: .05, ArrowUp: .05, ArrowLeft: -.05, ArrowDown: -.05 }[e.key];
-      if (k) { e.preventDefault(); box.classList.add('touched'); set(at + k); }
-      if (e.key === 'End') { e.preventDefault(); set(1); }
+      if (k) { e.preventDefault(); touch(); set(at + k); }
+      if (e.key === 'End') { e.preventDefault(); touch(); set(1); }
       if (e.key === 'Home') { e.preventDefault(); set(0); }
     });
   })();
