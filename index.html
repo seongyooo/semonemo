@@ -185,6 +185,7 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
 }
 .journey-strip::-webkit-scrollbar { display: none; }
 .journey-strip.dragging { scroll-snap-type: none; cursor: grabbing; user-select: none; }
+.journey-strip.gliding { scroll-snap-type: none; }
 .journey-strip.dragging img { pointer-events: none; }
 .journey-strip li { scroll-snap-align: start; position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: .79; background: #1E2238; }
 .journey-strip img { width: 100%; height: 100%; object-fit: cover; }
@@ -371,7 +372,7 @@ footer a { text-underline-offset: 3px; }
 <footer>
   <div class="wrap">
     <span class="name" lang="en">SEMONEMO</span>
-    <span>Seonline의 개인 개발 프로젝트, Unity 6로 만들었습니다.</span>
+    <span>개발자 Seonline</span>
     <nav aria-label="바닥글">
       <a href="https://sites.google.com/view/semonemo-privacy" rel="noopener">개인정보처리방침</a>
       <span>© 2026 Seonline</span>
@@ -432,9 +433,17 @@ footer a { text-underline-offset: 3px; }
   }, { once: true });
 
   // The journey slides sideways everywhere: swipe on a phone, drag with the mouse or use the arrows on a computer.
+  // A mouse drag is thrown like a swipe: it runs on at the speed it was let go and slows to rest on the nearest card.
   const strip = document.querySelector('.journey-strip');
   const prev = document.querySelector('.journey-nav .prev');
   const next = document.querySelector('.journey-nav .next');
+  const maxLeft = () => strip.scrollWidth - strip.clientWidth;
+  const stops = () => {
+    const box = strip.getBoundingClientRect(), edge = parseFloat(getComputedStyle(strip).paddingLeft);
+    return [...strip.children].map(li => Math.min(maxLeft(), Math.max(0,
+      li.getBoundingClientRect().left - box.left + strip.scrollLeft - edge)));
+  };
+  const nearest = x => stops().reduce((a, b) => Math.abs(b - x) < Math.abs(a - x) ? b : a);
   const step = () => {
     const li = strip.querySelector('li');
     const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
@@ -443,10 +452,30 @@ footer a { text-underline-offset: 3px; }
   };
   const ends = () => {
     prev.disabled = strip.scrollLeft < 4;
-    next.disabled = strip.scrollLeft > strip.scrollWidth - strip.clientWidth - 4;
+    next.disabled = strip.scrollLeft > maxLeft() - 4;
   };
-  prev.addEventListener('click', () => strip.scrollBy({ left: -step(), behavior: 'smooth' }));
-  next.addEventListener('click', () => strip.scrollBy({ left: step(), behavior: 'smooth' }));
+  // Glide to a place, quick at first and slowing to rest (ease-out), snapping held off until it arrives.
+  let glide = 0;
+  const glideTo = (to, ms) => {
+    cancelAnimationFrame(glide);
+    const from = strip.scrollLeft, t0 = performance.now();
+    if (Math.abs(to - from) < 1) { strip.classList.remove('gliding'); return; }
+    strip.classList.add('gliding');
+    const frame = now => {
+      const k = Math.min(1, (now - t0) / ms);
+      strip.scrollLeft = from + (to - from) * (1 - Math.pow(1 - k, 3));
+      if (k < 1) glide = requestAnimationFrame(frame);
+      else { strip.classList.remove('gliding'); glide = 0; }
+    };
+    glide = requestAnimationFrame(frame);
+  };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const page = dir => {
+    const to = nearest(Math.min(maxLeft(), Math.max(0, strip.scrollLeft + dir * step())));
+    reduce ? (strip.scrollLeft = to) : glideTo(to, 650);
+  };
+  prev.addEventListener('click', () => page(-1));
+  next.addEventListener('click', () => page(1));
   strip.addEventListener('scroll', ends, { passive: true });
   addEventListener('resize', ends);
   ends();
@@ -457,30 +486,41 @@ footer a { text-underline-offset: 3px; }
   }, { capture: true });
   strip.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse' || e.button !== 0) return;
-    drag = { x: e.clientX, left: strip.scrollLeft, moved: false };
+    cancelAnimationFrame(glide);
+    drag = { x: e.clientX, left: strip.scrollLeft, moved: false, trail: [{ t: e.timeStamp, x: e.clientX }] };
   });
   addEventListener('pointermove', e => {
     if (!drag) return;
     const dx = e.clientX - drag.x;
     if (!drag.moved && Math.abs(dx) > 4) { drag.moved = true; strip.classList.add('dragging'); }
-    if (drag.moved) strip.scrollLeft = drag.left - dx;
+    if (!drag.moved) return;
+    strip.scrollLeft = drag.left - dx;
+    drag.trail.push({ t: e.timeStamp, x: e.clientX });
+    while (drag.trail.length > 2 && e.timeStamp - drag.trail[0].t > 100) drag.trail.shift();
   });
-  addEventListener('pointerup', () => {
+  const letGo = e => {
     if (!drag) return;
-    const moved = drag.moved;
+    const { moved, trail } = drag;
     drag = null;
     if (!moved) return;
-    // Let go: settle on the nearest card, as a swipe would.
-    const left = strip.scrollLeft;
-    strip.classList.remove('dragging');
-    strip.scrollLeft = left;
     dragEnd = performance.now();
-    setTimeout(() => strip.dispatchEvent(new Event('scroll')), 0);
-  });
+    // The hand's speed over its last tenth of a second, in pixels a millisecond; still for a while means no throw.
+    const a = trail[0], b = trail[trail.length - 1];
+    const still = e.timeStamp - b.t > 60;
+    const v = still || b.t === a.t ? 0 : -(b.x - a.x) / (b.t - a.t);
+    const from = strip.scrollLeft;
+    const to = nearest(Math.min(maxLeft(), Math.max(0, from + v * 300)));
+    strip.classList.replace('dragging', 'gliding');
+    // Start at the speed it was thrown (an ease-out cubic leaves at three times its average speed).
+    const ms = Math.abs(v) > .05 ? Math.min(1100, Math.max(320, 3 * Math.abs(to - from) / Math.abs(v))) : 420;
+    reduce ? (strip.classList.remove('gliding'), strip.scrollLeft = to) : glideTo(to, ms);
+  };
+  addEventListener('pointerup', letGo);
+  addEventListener('pointercancel', letGo);
   strip.addEventListener('dragstart', e => e.preventDefault());
   strip.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); page(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); page(-1); }
   });
 </script>
 </body>
