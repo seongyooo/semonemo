@@ -9,7 +9,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="SEMONEMO 세모네모">
 <meta property="og:description" content="시점을 돌려 착시로 길을 잇는 퍼즐 게임">
-<meta property="og:image" content="https://seongyooo.github.io/semonemo/assets/img/og.jpg">
+<meta property="og:image" content="https://seongyooo.github.io/semonemo/assets/img/og-meadow.jpg">
 <meta property="og:url" content="https://seongyooo.github.io/semonemo/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
@@ -165,12 +165,27 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
 .rule figcaption, .more figcaption { margin-top: 12px; color: var(--ink-3); font-size: .95rem; }
 
 /* the journey: the cube hub and the seven chapters in order */
-.journey-strip {
-  list-style: none; margin: 34px 0 0; padding: 0 var(--gutter) 10px;
-  display: grid; grid-auto-flow: column; grid-auto-columns: min(46vw, 210px); gap: 10px;
-  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gutter);
-  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+.journey .head { display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; }
+.journey .head p { margin-bottom: 0; }
+.journey-nav { display: none; gap: 10px; flex: none; }
+.journey-nav button {
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(36, 42, 74, .22);
+  background: transparent; color: var(--ink); cursor: pointer; display: grid; place-items: center;
+  transition: background .2s ease, opacity .2s ease;
 }
+.journey-nav button:hover { background: rgba(36, 42, 74, .07); }
+.journey-nav button:disabled { opacity: .3; cursor: default; background: transparent; }
+.journey-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.journey-strip {
+  --edge: max(var(--gutter), calc((100% - 1120px) / 2 + var(--gutter)));
+  list-style: none; margin: 34px 0 0; padding: 0 var(--edge) 14px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: min(46vw, 210px); gap: 10px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--edge);
+  overscroll-behavior-x: contain; scrollbar-width: none;
+}
+.journey-strip::-webkit-scrollbar { display: none; }
+.journey-strip.dragging { scroll-snap-type: none; cursor: grabbing; user-select: none; }
+.journey-strip.dragging img { pointer-events: none; }
 .journey-strip li { scroll-snap-align: start; position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: .79; background: #1E2238; }
 .journey-strip img { width: 100%; height: 100%; object-fit: cover; }
 .journey-strip li::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(180deg, transparent, rgba(20, 24, 48, .7)); }
@@ -215,7 +230,8 @@ footer a { text-underline-offset: 3px; }
 @media (min-width: 760px) {
   .rule .grid { grid-template-columns: 1fr 1.15fr; }
   .more .pair { grid-template-columns: 1fr 1fr; }
-  .journey-strip { grid-auto-flow: row; grid-template-columns: repeat(4, 1fr); gap: 14px; overflow: visible; max-width: 1120px; margin-left: auto; margin-right: auto; }
+  .journey-nav { display: flex; }
+  .journey-strip { grid-auto-columns: clamp(220px, 23vw, 290px); gap: 14px; cursor: grab; }
   .play-section .grid { grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: center; }
   .play-section .linker { width: min(100%, 360px); margin: 0 0 0 auto; align-self: end; }
   .play-section .words { padding-bottom: 80px; }
@@ -284,9 +300,15 @@ footer a { text-underline-offset: 3px; }
   <section class="journey" aria-labelledby="journey-title">
     <div class="wrap">
       <h2 id="journey-title">큐브 허브에서 초원까지</h2>
+      <div class="head">
       <p>떠 있는 큐브의 면마다 장이 하나씩 있습니다. 장마다 하늘과 돌의 색, 음악, 새로운 장치가 바뀌고, 그늘이 되어 버린 링커들을 되돌리기 위해 흩어진 코어 조각을 모으는 여정이 이어집니다.</p>
+      <div class="journey-nav">
+        <button type="button" class="prev" aria-label="이전 장 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button type="button" class="next" aria-label="다음 장 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      </div>
     </div>
-    <ol class="journey-strip">
+    <ol class="journey-strip" tabindex="0" aria-label="큐브 허브와 일곱 장, 옆으로 넘겨 보기">
       <li><img src="assets/img/journey_hub.jpg" width="720" height="911" loading="lazy" alt="큐브 허브: 떠 있는 큐브 위에 링커가 서 있다."><div class="label"><small lang="en">START</small><span lang="en">CUBE HUB</span></div></li>
       <li><img src="assets/img/journey_ch1.jpg" width="720" height="911" loading="lazy" alt="1장 Fragments: 높이가 다른 탑 사이의 길."><div class="label"><small lang="en">CHAPTER 1</small><span lang="en">FRAGMENTS</span></div></li>
       <li><img src="assets/img/journey_ch2.jpg" width="720" height="911" loading="lazy" alt="2장 Paths: 복숭아빛 아치와 기둥 사이의 길."><div class="label"><small lang="en">CHAPTER 2</small><span lang="en">PATHS</span></div></li>
@@ -356,6 +378,58 @@ footer a { text-underline-offset: 3px; }
     player.style.cursor = 'default';
     el.focus?.();
   }, { once: true });
+
+  // The journey slides sideways everywhere: swipe on a phone, drag with the mouse or use the arrows on a computer.
+  const strip = document.querySelector('.journey-strip');
+  const prev = document.querySelector('.journey-nav .prev');
+  const next = document.querySelector('.journey-nav .next');
+  const step = () => {
+    const li = strip.querySelector('li');
+    const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
+    const per = li.offsetWidth + gap;
+    return Math.max(1, Math.floor((strip.clientWidth - 2 * parseFloat(getComputedStyle(strip).paddingLeft) + gap) / per)) * per;
+  };
+  const ends = () => {
+    prev.disabled = strip.scrollLeft < 4;
+    next.disabled = strip.scrollLeft > strip.scrollWidth - strip.clientWidth - 4;
+  };
+  prev.addEventListener('click', () => strip.scrollBy({ left: -step(), behavior: 'smooth' }));
+  next.addEventListener('click', () => strip.scrollBy({ left: step(), behavior: 'smooth' }));
+  strip.addEventListener('scroll', ends, { passive: true });
+  addEventListener('resize', ends);
+  ends();
+  let drag = null, dragEnd = -1e9;
+  // A drag that ends over a card is not a click on it.
+  strip.addEventListener('click', e => {
+    if (performance.now() - dragEnd < 80) { e.preventDefault(); e.stopPropagation(); }
+  }, { capture: true });
+  strip.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    drag = { x: e.clientX, left: strip.scrollLeft, moved: false };
+  });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) > 4) { drag.moved = true; strip.classList.add('dragging'); }
+    if (drag.moved) strip.scrollLeft = drag.left - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const moved = drag.moved;
+    drag = null;
+    if (!moved) return;
+    // Let go: settle on the nearest card, as a swipe would.
+    const left = strip.scrollLeft;
+    strip.classList.remove('dragging');
+    strip.scrollLeft = left;
+    dragEnd = performance.now();
+    setTimeout(() => strip.dispatchEvent(new Event('scroll')), 0);
+  });
+  strip.addEventListener('dragstart', e => e.preventDefault());
+  strip.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+  });
 </script>
 </body>
 </html>
