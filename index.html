@@ -227,20 +227,22 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
 .rule figcaption, .more figcaption { margin-top: 12px; color: var(--ink-3); font-size: .95rem; }
 
 /* the journey: the cube hub and the seven chapters in order */
-.journey .head { display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; }
+/* phone: the arrows under the words, at the right; wider screens: beside them */
+.journey .head { display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
+.journey .head p { align-self: stretch; }
 .journey .head p { margin-bottom: 0; }
-.journey-nav { display: none; gap: 10px; flex: none; }
+.journey-nav { display: flex; gap: 10px; flex: none; }
 .journey-nav button {
   width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(36, 42, 74, .22);
   background: transparent; color: var(--ink); cursor: pointer; display: grid; place-items: center;
   transition: background .2s ease, opacity .2s ease;
 }
-.journey-nav button:hover { background: rgba(36, 42, 74, .07); }
+@media (hover: hover) { .journey-nav button:hover { background: rgba(36, 42, 74, .07); } }
 .journey-nav button:disabled { opacity: .3; cursor: default; background: transparent; }
 .journey-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .journey-strip {
   --edge: max(var(--gutter), calc((100% - 1120px) / 2 + var(--gutter)));
-  list-style: none; margin: 34px 0 0; padding: 0 var(--edge) 14px;
+  list-style: none; margin: clamp(18px, 3vw, 34px) 0 0; padding: 0 var(--edge) 14px;
   display: grid; grid-auto-flow: column; grid-auto-columns: min(46vw, 210px); gap: 10px;
   overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--edge);
   overscroll-behavior-x: contain; scrollbar-width: none;
@@ -293,7 +295,8 @@ footer a { text-underline-offset: 3px; }
 @media (min-width: 760px) {
   .rule .grid { grid-template-columns: 1fr 1.15fr; }
   .more .pair { grid-template-columns: 1fr 1fr; }
-  .journey-nav { display: flex; }
+  .journey .head { flex-direction: row; justify-content: space-between; gap: 20px; }
+  .journey .head p { align-self: auto; }
   .journey-strip { grid-auto-columns: clamp(220px, 23vw, 290px); gap: 14px; cursor: grab; }
   .play-section .grid { grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: center; }
   .play-section .linker { width: min(100%, 360px); margin: 0 0 0 auto; align-self: end; }
