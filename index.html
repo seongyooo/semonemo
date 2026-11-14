@@ -125,6 +125,27 @@ a { color: inherit; }
 }
 .scene-names p.is-on { opacity: 1; transition-delay: .6s; }
 .scene-names small { font-size: .78em; margin-right: .9em; opacity: .8; }
+/* Dots at the foot of the screen while the opening is on it: one per scene, the one showing drawn long; pick one
+   to go to it. */
+.scene-dots {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 9; transform: translateX(-50%);
+  display: flex; gap: 0; padding: 3px 8px; border-radius: 20px;
+  background: rgba(243, 240, 244, .5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: opacity .5s ease, transform .5s ease, background-color 1.2s ease;
+}
+.hero.is-dark .scene-dots { background: rgba(26, 30, 56, .42); }
+.scene-dots.is-away { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+.scene-dots button {
+  width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center;
+  border-radius: 15px;
+}
+.scene-dots button::before {
+  content: ""; display: block; width: 7px; height: 7px; border-radius: 4px; background: var(--hero-ink-2); opacity: .55;
+  transition: width .4s ease, opacity .4s ease, background-color 1.2s ease;
+}
+.scene-dots button[aria-current="true"]::before { width: 22px; opacity: 1; background: var(--hero-ink); }
+.scene-dots button:hover::before { opacity: .9; }
+.scene-dots button:focus-visible { outline: 2px solid var(--hero-ink); outline-offset: -4px; }
 .hero picture img {
   width: 100%;
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 76%, transparent 100%);
@@ -281,7 +302,45 @@ p { margin: 0 0 1.1em; max-width: var(--measure); color: var(--ink-2); }
   overflow: hidden;
 }
 .play-section .grid { display: grid; gap: 8px; align-items: end; }
-.play-section .linker { width: min(62vw, 300px); margin: 0 auto; }
+.play-section .linker { width: min(62vw, 300px); margin: 0 auto; position: relative; }
+.play-section .linker img, .play-section .linker canvas { display: block; width: 100%; height: auto; }
+/* The live Linker (assets/linker/linker3d.js) over its picture, which stays until the first frame is drawn. */
+.play-section .linker canvas {
+  position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease;
+  -webkit-mask-image: linear-gradient(#000 50%, transparent 88%); mask-image: linear-gradient(#000 50%, transparent 88%);
+}
+.play-section .linker.is-live canvas { opacity: 1; }
+.play-section .linker.is-live img { visibility: hidden; }
+/* The small Linker in the corner, with the reader from the end of the opening until the one at the foot. */
+.companion {
+  position: fixed; left: max(12px, env(safe-area-inset-left)); bottom: max(6px, env(safe-area-inset-bottom)); z-index: 10;
+  width: 96px; aspect-ratio: 720 / 1069; opacity: 0; transform: translateY(18px);
+  transition: opacity .5s ease, transform .5s ease; pointer-events: none;
+}
+.companion.on { opacity: 1; transform: none; }
+.companion canvas {
+  display: block; width: 100%; height: 100%; cursor: pointer;
+  -webkit-mask-image: linear-gradient(#000 56%, transparent 86%); mask-image: linear-gradient(#000 56%, transparent 86%);
+}
+.companion.on canvas { pointer-events: auto; }
+/* Once, over the first live Linker met: try picking it up. */
+.linker-hint {
+  position: absolute; left: 50%; bottom: calc(100% + 10px); z-index: 11; margin: 0; max-width: none;
+  padding: 7px 13px; border-radius: 14px; white-space: nowrap; pointer-events: none;
+  background: rgba(251, 248, 241, .95); color: var(--ink); font: 500 .82rem/1.3 var(--sans);
+  box-shadow: 0 10px 26px -14px rgba(36, 42, 74, .6);
+  opacity: 0; transform: translate(-50%, 6px); transition: opacity .5s ease, transform .5s ease;
+}
+.linker-hint::after {
+  content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: rgba(251, 248, 241, .95);
+}
+.linker-hint.on { opacity: 1; transform: translate(-50%, 0); }
+.play-section .linker .linker-hint { bottom: 97%; }
+.companion .linker-hint { left: 6px; transform: translate(0, 6px); }
+.companion .linker-hint.on { transform: none; }
+.companion .linker-hint::after { left: 30px; }
+@media (max-width: 759px) { .companion { width: 68px; left: max(6px, env(safe-area-inset-left)); } }
 .platforms { list-style: none; margin: 8px 0 18px; padding: 0; max-width: var(--measure); }
 .platforms li {
   display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center;
@@ -340,6 +399,12 @@ footer a { text-underline-offset: 3px; }
   .turn .gesture circle { animation: none; }
 }
 </style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 
@@ -387,6 +452,13 @@ footer a { text-underline-offset: 3px; }
     <div class="cta-row">
       <a class="button" href="#trailer"><svg viewBox="0 0 10 12" aria-hidden="true"><path d="M0 0 L10 6 L0 12 Z" fill="currentColor"/></svg>트레일러 보기</a>
       <span class="status">Google Play 출시 준비 중</span>
+    </div>
+    <div class="scene-dots" role="group" aria-label="배경 장면 고르기">
+      <button type="button" data-sky="ch2" aria-label="2장 PATHS" aria-current="true"></button>
+      <button type="button" data-sky="ch3" aria-label="3장 FADING"></button>
+      <button type="button" data-sky="ch4" aria-label="4장 SIGNS"></button>
+      <button type="button" data-sky="ch6" aria-label="6장 DARK"></button>
+      <button type="button" data-sky="ch7" aria-label="7장 MEADOW"></button>
     </div>
   </div>
 </header>
@@ -477,7 +549,7 @@ footer a { text-underline-offset: 3px; }
 
   <section class="play-section" id="play" aria-labelledby="play-title">
     <div class="wrap grid">
-      <img class="linker" src="assets/img/linker.webp" width="720" height="1069" loading="lazy" alt="돌 블록 위에 선 링커가 위를 올려다본다.">
+      <figure class="linker"><img src="assets/img/linker.webp" width="720" height="1069" loading="lazy" alt="돌 블록 위에 선 링커가 위를 올려다본다."><p class="linker-hint" aria-hidden="true">링커를 한번 잡아 보세요</p></figure>
       <div class="words">
         <h2 id="play-title">플레이하기</h2>
         <ul class="platforms">
@@ -508,14 +580,23 @@ footer a { text-underline-offset: 3px; }
 
 <script>
   // The opening: chapter 2, 3, 4, 6's dark and 7's meadow pass behind the name, one every few seconds, while it is
-  // on screen. The first picture loads with the page, the others once it has loaded.
+  // on screen; the dots under it go to one by hand (and the passing starts over from there). The first picture
+  // loads with the page, the others once it has loaded, or at once when picked. With less motion asked for, only
+  // the dots move it.
   (() => {
     const hero = document.querySelector('.hero');
     const pics = [...hero.querySelectorAll('.hero-art picture')];
     const names = Object.fromEntries([...hero.querySelectorAll('.scene-names p')].map(p => [p.dataset.sky, p]));
     const skies = Object.fromEntries([...hero.querySelectorAll('.hero-sky i')].map(i => [i.className.match(/sky-(\w+)/)[1], i]));
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const HOLD = 6500, FIRST = 8000;
+    const dots = [...hero.querySelectorAll('.scene-dots button')];
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // The first change comes as soon as the name has finished writing itself (the letters by 2.4 s, the slogan by
+    // 2.8 s from the page's start), so whoever has just come sees that the scenes change; then one every HOLD.
+    const HOLD = 4500, FIRST_AT = 3200, AFTER_PICK = 8000;
+    const fetchPic = p => {
+      p.querySelectorAll('[data-srcset]').forEach(s => { s.srcset = s.dataset.srcset; s.removeAttribute('data-srcset'); });
+      p.querySelectorAll('[data-src]').forEach(i => { i.src = i.dataset.src; i.removeAttribute('data-src'); });
+    };
     let at = 0, timer = 0, seen = true;
     const ready = p => { const img = p.querySelector('img'); return img.complete && img.naturalWidth > 0; };
     const show = n => {
@@ -524,25 +605,39 @@ footer a { text-underline-offset: 3px; }
       next.classList.add('is-on'); skies[next.dataset.sky].classList.add('is-on');
       names[was.dataset.sky].classList.remove('is-on'); names[next.dataset.sky].classList.add('is-on');
       hero.classList.toggle('is-dark', next.hasAttribute('data-dark'));
+      dots.forEach((d, i) => d.setAttribute('aria-current', i === n ? 'true' : 'false'));
       at = n;
     };
+    dots.forEach((d, i) => d.addEventListener('click', () => {
+      if (i === at) return;
+      fetchPic(pics[i]);
+      show(i);
+      halt();
+      if (!still) run(AFTER_PICK);
+    }));
     const tick = () => {
       timer = 0;
       if (!seen || document.hidden) return;
       const n = (at + 1) % pics.length;
-      if (ready(pics[n])) show(n);
+      if (!ready(pics[n])) { timer = setTimeout(tick, 400); return; }
+      show(n);
       timer = setTimeout(tick, HOLD);
     };
-    const run = delay => { if (!timer) timer = setTimeout(tick, delay); };
+    const run = delay => { if (!timer && !still) timer = setTimeout(tick, delay); };
     const halt = () => { clearTimeout(timer); timer = 0; };
-    addEventListener('load', () => {
-      for (const p of pics.slice(1)) {
-        p.querySelectorAll('[data-srcset]').forEach(s => s.srcset = s.dataset.srcset);
-        p.querySelectorAll('[data-src]').forEach(i => i.src = i.dataset.src);
-      }
-      run(FIRST);
-    });
-    new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen ? run(HOLD) : halt(); }, { threshold: .25 }).observe(hero);
+    fetchPic(pics[1]);   // the first change's picture at once; the rest once the page has loaded
+    addEventListener('load', () => pics.slice(2).forEach(fetchPic));
+    run(Math.max(300, FIRST_AT - performance.now()));
+    const dotsBox = hero.querySelector('.scene-dots');
+    new IntersectionObserver(([e]) => {
+      seen = e.isIntersecting;
+      seen ? run(HOLD) : halt();
+    }, { threshold: .25 }).observe(hero);
+    // The dots stay until the opening's foot rises past the middle of the screen.
+    const place = () => dotsBox.classList.toggle('is-away', hero.getBoundingClientRect().bottom < innerHeight * .6);
+    addEventListener('scroll', place, { passive: true });
+    addEventListener('resize', place);
+    place();
     document.addEventListener('visibilitychange', () => document.hidden ? halt() : seen && run(HOLD));
   })();
 
@@ -801,6 +896,31 @@ footer a { text-underline-offset: 3px; }
     if (e.key === 'ArrowRight') { e.preventDefault(); page(1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); page(-1); }
   });
+</script>
+<script>
+  // The Linker comes alive (its head follows the pointer and the scroll, it hops when clicked) once the reader
+  // starts down the page: small in the corner, then the one at the foot. With less motion asked for, or if 3D
+  // cannot be drawn, the picture at the foot stays and no small one comes.
+  (() => {
+    const fig = document.querySelector('.play-section .linker');
+    const hero = document.querySelector('.hero');
+    if (!fig || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const companion = document.createElement('div');
+    companion.className = 'companion';
+    companion.setAttribute('aria-hidden', 'true');
+    document.body.append(companion);
+    let begun = false;
+    const begin = () => {
+      if (begun) return;
+      begun = true;
+      const hint = fig.querySelector('.linker-hint');
+      import('./assets/linker/linker3d.js').then((m) => m.start(fig, { companion, hero, hint })).catch(() => companion.remove());
+    };
+    new IntersectionObserver((entries) => { if (entries.some((e) => e.intersectionRatio < 0.75)) begin(); },
+      { threshold: [0.75] }).observe(hero);
+    new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) begin(); },
+      { rootMargin: '400px' }).observe(fig);
+  })();
 </script>
 </body>
 </html>
