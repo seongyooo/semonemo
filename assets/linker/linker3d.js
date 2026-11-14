@@ -95,7 +95,7 @@ void main() {
   gl_FragColor = vec4(grade(s), 1.0);
 }`;
 
-function material(m, shared, extra = {}) {
+export function material(m, shared, extra = {}) {
   const col = (k, d) => new THREE.Color().fromArray(m[k] || d);
   return new THREE.ShaderMaterial({
     vertexShader: VERT,
@@ -121,7 +121,7 @@ function material(m, shared, extra = {}) {
   });
 }
 
-function geometry(mesh) {
+export function geometry(mesh) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(mesh.v, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(mesh.n, 3));
@@ -150,7 +150,7 @@ function listen() {
 }
 
 let files;
-function load() {
+export function load() {
   files = files || Promise.all([
     fetch(new URL('scene.json', BASE)).then((r) => r.json()),
     fetch(new URL('linker.glb', BASE)).then((r) => r.arrayBuffer()),
@@ -198,13 +198,18 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
   canvas.setAttribute('aria-hidden', 'true');
   // The canvas reaches ROOM of the box's height above it (the head at the top of a hop), the box's own picture
   // unchanged below; it fades out from fade[0] to fade[1] of the box's height, as the picture does.
+  // and SIDE of its width out to either side (set down at the edge of its stone, it is not cut off). The canvas
+  // takes no pointer: the Linker is picked up wherever it stands on screen (below), and what lies beside it is
+  // still there to read and click.
   const ROOM = 0.16;
+  const SIDE = 0.35;
   const at = (f) => `${((ROOM + f) / (1 + ROOM) * 100).toFixed(1)}%`;
   const mask = `linear-gradient(#000 ${at(fade[0])}, transparent ${at(fade[1])})`;
   Object.assign(canvas.style, {
-    position: 'absolute', left: '0', width: '100%', top: `${-ROOM * 100}%`, height: `${(1 + ROOM) * 100}%`,
-    webkitMaskImage: mask, maskImage: mask, touchAction: 'none', cursor: 'grab',
+    position: 'absolute', left: `${-SIDE * 100}%`, width: `${(1 + 2 * SIDE) * 100}%`, top: `${-ROOM * 100}%`,
+    height: `${(1 + ROOM) * 100}%`, webkitMaskImage: mask, maskImage: mask, pointerEvents: 'none',
   });
+  box.style.touchAction = 'none';
 
   const shared = {
     light: { value: new THREE.Vector3().fromArray(scene3.light).normalize() },
@@ -225,6 +230,8 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
   const H = 0.73 * S;                                      // feet to the top of the hood
   const home = new THREE.Vector3().fromArray(L.position);
   const homeYaw = THREE.MathUtils.degToRad(L.yaw);
+  const spot = home.clone();                               // where it stands now: home, or wherever on the stone it was set down
+  const STONE_HALF = 0.72;                                 // how far across the screen from home the stone's top still bears it
   const holder = new THREE.Group();
   holder.position.copy(home);
   holder.rotation.y = homeYaw;
@@ -276,8 +283,9 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
   const botU = topU - frameH;
 
   function frame() {
-    const w = Math.max(1, box.clientWidth);
-    const h = Math.max(1, Math.round(w * 1069 / 720 * (1 + ROOM)));
+    const bw = Math.max(1, box.clientWidth);
+    const w = Math.round(bw * (1 + 2 * SIDE));
+    const h = Math.max(1, Math.round(bw * 1069 / 720 * (1 + ROOM)));
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(w, h, false);
     const half = frameH * (1 + ROOM) * (w / h) / 2;
@@ -389,29 +397,30 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
 
   function onLinker(x, y) {
     // The pointer over the Linker itself (not the stone): within its standing outline on screen.
-    const f = toScreen(home);
-    const t = toScreen(home.clone().add(new THREE.Vector3(0, H, 0)));
+    const f = toScreen(spot);
+    const t = toScreen(spot.clone().add(new THREE.Vector3(0, H, 0)));
     const half = 0.2 * S * pxPerUnit();
     return x > f.x - half && x < f.x + half && y > t.y - 6 && y < f.y + 6;
   }
-  canvas.addEventListener('pointerdown', (e) => {
-    if (mode !== 'stand' || !onLinker(e.clientX, e.clientY)) return;
+  addEventListener('pointerdown', (e) => {
+    if (!running || mode !== 'stand' || !onLinker(e.clientX, e.clientY)) return;
     if (onTouch) onTouch();
     Object.assign(press, { on: true, x: e.clientX, y: e.clientY, at: performance.now(), id: e.pointerId });
     e.preventDefault();
   });
   // (Followed on the window, so the pointer may go anywhere while it holds the Linker.)
   addEventListener('pointermove', (e) => {
+    // Over the Linker, a hand to say it can be picked up.
+    if (!press.on) box.style.cursor = running && mode === 'stand' && onLinker(e.clientX, e.clientY) ? 'grab' : '';
     if (!press.on || e.pointerId !== press.id) return;
     const now = performance.now();
     if (mode === 'stand' && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 6 && borrowOverlay(api)) {
       // Lifted by the hood: it starts from where it stands, the hood's top under the pointer.
-      anchor.copy(home).add(new THREE.Vector3(0, H, 0));
+      anchor.copy(spot).add(new THREE.Vector3(0, H, 0));
       anchorVel.set(0, 0, 0); lastAnchorVel.set(0, 0, 0);
       swing = 0; swingVel = 0;
       samples.length = 0;
       setMode('held', now);
-      canvas.style.cursor = 'grabbing';
       document.documentElement.style.cursor = 'grabbing';
     }
     if (mode === 'held') {
@@ -427,7 +436,6 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
       if (now - hopAt > HOP) { hopAt = now; blinkAt = now + 90; }
     } else if (mode === 'held') {
       setMode('fall', now);
-      canvas.style.cursor = 'grab';
       document.documentElement.style.cursor = '';
     }
   };
@@ -469,7 +477,7 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
       const land = lt >= 0 && lt < 0.16 ? 1 - 0.24 * Math.sin(Math.PI * lt / 0.16)
         : lt >= 0.16 && lt < 0.42 ? 1 + 0.06 * Math.sin(Math.PI * (lt - 0.16) / 0.26) : 1;
       const squash = hopSquash * land;
-      holder.position.copy(home).addScaledVector(yAxis, lift * S);
+      holder.position.copy(spot).addScaledVector(yAxis, lift * S);
       holder.scale.set(S / Math.sqrt(squash), S * squash, S / Math.sqrt(squash));
       return;
     }
@@ -505,7 +513,20 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
       hang.copy(rightV).multiplyScalar(Math.sin(swing)).addScaledVector(yAxis, -Math.cos(swing)).normalize();
       qBody.setFromUnitVectors(tmp.set(0, -1, 0), hang);
       holder.quaternion.copy(qBody).multiply(qHome);
+      const wasAbove = holder.position.y > home.y - 1e-3;
       holder.position.copy(anchor).addScaledVector(hang, H);
+      // Held over its stone, its feet stay on or above the top (it is lifted off it, not pushed into it).
+      if (mode === 'held' && Math.abs(tmp.copy(holder.position).sub(home).dot(rightV)) < STONE_HALF && holder.position.y < home.y) {
+        anchor.y += home.y - holder.position.y;
+        holder.position.y = home.y;
+      }
+      // Let go over its stone: it comes down on it, feet first, and stands where it was set down.
+      const across = tmp.copy(holder.position).sub(home).dot(rightV);
+      if (mode === 'fall' && wasAbove && holder.position.y <= home.y && Math.abs(across) < STONE_HALF) {
+        spot.copy(home).addScaledVector(rightV, across);
+        land(now);
+        return;
+      }
       // Out of sight below the window: back onto its stone, from above.
       const top = toScreen(anchor);
       if (mode === 'fall' && (top.y > innerHeight + 40 || t > 1.8)) {
@@ -525,12 +546,21 @@ async function make(box, { onFirstFrame, onTouch, fade = [0.5, 0.88] } = {}) {
     holder.quaternion.copy(qHome);
     if (anchor.y <= home.y) {
       anchor.copy(home);
-      landAt = now;
-      blinkAt = now + 40;
-      setMode('stand', now);
-      returnOverlay(api);
+      spot.copy(home);
+      land(now);
     }
     holder.position.copy(anchor);
+  }
+
+  // On its feet again: upright where it stands, a squash and a little give, a blink, and back in its picture.
+  function land(now) {
+    holder.position.copy(spot);
+    holder.quaternion.copy(qHome);
+    swing = 0; swingVel = 0;
+    landAt = now;
+    blinkAt = now + 40;
+    setMode('stand', now);
+    returnOverlay(api);
   }
 
   function pose(now) {
